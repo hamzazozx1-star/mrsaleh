@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.M.S | مستر صالح عبد الرؤوف</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e293b;
+            --accent: #f59e0b;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+        body { font-family: 'Tajawal', sans-serif; background-color: #f1f5f9; }
+        
+        /* تأثيرات حركية */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); }
+        
+        /* تخصيص السكانر */
+        .scanner-box { transition: all 0.3s ease; border: 2px dashed #cbd5e1; }
+        .scanner-focused { border-color: var(--success); background-color: rgba(16, 185, 129, 0.05); box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.1); }
+        .scanner-blur { border-color: var(--danger); background-color: rgba(239, 68, 68, 0.05); }
+
+        /* شريط التمرير */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        
+        /* التنبيهات المنبثقة */
+        #toast-container { position: fixed; bottom: 20px; left: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+        .toast { padding: 1rem 1.5rem; border-radius: 8px; color: white; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; min-width: 300px; transform: translateX(-100%); animation: slideIn 0.3s forwards; }
+        @keyframes slideIn { to { transform: translateX(0); } }
+    </style>
+</head>
+<body class="text-slate-800 h-screen overflow-hidden flex">
+
+    <aside class="w-72 bg-slate-900 text-white flex flex-col shadow-2xl relative z-20">
+        <div class="h-24 flex items-center justify-center border-b border-slate-800 bg-slate-950">
+            <div class="text-center">
+                <div class="flex items-center justify-center gap-2 mb-1">
+                    <i class="fas fa-shapes text-blue-500 text-2xl"></i>
+                    <h1 class="text-2xl font-bold tracking-wide">MR. SALEH</h1>
+                </div>
+                <p class="text-xs text-slate-400 tracking-widest uppercase">Math Management System</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 py-6 px-3 space-y-2 overflow-y-auto">
+            <div class="text-xs font-bold text-slate-500 px-4 mb-2 uppercase">القوائم الرئيسية</div>
+            
+            <button onclick="navTo('dashboard')" class="nav-btn w-full flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition-all group bg-slate-800 border-r-4 border-blue-500">
+                <i class="fas fa-chart-pie w-8 text-blue-400 group-hover:text-white transition-colors"></i>
+                <span class="font-medium">لوحة القيادة</span>
+            </button>
+            
+            <button onclick="navTo('attendance')" class="nav-btn w-full flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition-all group">
+                <i class="fas fa-barcode w-8 text-emerald-400 group-hover:text-white transition-colors"></i>
+                <span class="font-medium">نظام الحضور (Scan)</span>
+            </button>
+            
+            <button onclick="navTo('students')" class="nav-btn w-full flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition-all group">
+                <i class="fas fa-users w-8 text-violet-400 group-hover:text-white transition-colors"></i>
+                <span class="font-medium">شؤون الطلاب</span>
+            </button>
+
+            <button onclick="navTo('finance')" class="nav-btn w-full flex items-center px-4 py-3 rounded-xl hover:bg-slate-800 transition-all group">
+                <i class="fas fa-wallet w-8 text-amber-400 group-hover:text-white transition-colors"></i>
+                <span class="font-medium">المالية والتقارير</span>
+            </button>
+        </nav>
+
+        <div class="p-4 bg-slate-950 border-t border-slate-800">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-lg">H</div>
+                <div>
+                    <p class="text-sm font-bold text-white">Eng. Hamza</p>
+                    <p class="text-xs text-slate-500">System Administrator</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col bg-[#f1f5f9] relative overflow-hidden">
+        
+        <header class="h-20 bg-white shadow-sm flex items-center justify-between px-8 z-10">
+            <div>
+                <h2 id="pageTitle" class="text-2xl font-bold text-slate-800">لوحة القيادة</h2>
+                <p id="pageSub" class="text-xs text-slate-500">نظرة عامة على سير العمل اليومي</p>
+            </div>
+
+            <div class="flex items-center gap-6">
+                <div id="scannerStatus" class="flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 text-slate-500 text-sm font-medium transition-all">
+                    <div class="w-2 h-2 rounded-full bg-slate-400"></div>
+                    وضع السكانر خامل
+                </div>
+
+                <div class="text-left hidden md:block">
+                    <div id="clockTime" class="text-lg font-bold text-slate-800 leading-none">00:00:00</div>
+                    <div id="clockDate" class="text-xs text-slate-500 uppercase">يناير 2024</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-8 relative">
+            
+            <div id="dashboard" class="view-section fade-in">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm card-hover border-b-4 border-blue-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-slate-500 text-sm font-medium">إجمالي الطلاب</p>
+                                <h3 class="text-4xl font-bold text-slate-800 mt-2" id="dashTotalStudents">0</h3>
+                            </div>
+                            <div class="p-3 bg-blue-50 rounded-xl text-blue-600"><i class="fas fa-user-graduate text-xl"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm card-hover border-b-4 border-emerald-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-slate-500 text-sm font-medium">حضور اليوم</p>
+                                <h3 class="text-4xl font-bold text-slate-800 mt-2" id="dashTodayAttendance">0</h3>
+                            </div>
+                            <div class="p-3 bg-emerald-50 rounded-xl text-emerald-600"><i class="fas fa-check text-xl"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm card-hover border-b-4 border-amber-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-slate-500 text-sm font-medium">إيراد اليوم</p>
+                                <h3 class="text-4xl font-bold text-slate-800 mt-2"><span id="dashTodayIncome">0</span> <span class="text-sm">ج.م</span></h3>
+                            </div>
+                            <div class="p-3 bg-amber-50 rounded-xl text-amber-600"><i class="fas fa-sack-dollar text-xl"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm card-hover border-b-4 border-red-500">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <p class="text-slate-500 text-sm font-medium">مديونيات (لهم)</p>
+                                <h3 class="text-4xl font-bold text-slate-800 mt-2"><span id="dashTotalDebt">0</span> <span class="text-sm">ج.م</span></h3>
+                            </div>
+                            <div class="p-3 bg-red-50 rounded-xl text-red-600"><i class="fas fa-hand-holding-usd text-xl"></i></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm p-6">
+                    <h3 class="font-bold text-lg mb-4 text-slate-700">سجل النشاط الأخير</h3>
+                    <table class="w-full text-right">
+                        <thead class="bg-slate-50 text-slate-500 text-xs uppercase">
+                            <tr>
+                                <th class="p-3 rounded-r-lg">الوقت</th>
+                                <th class="p-3">الطالب</th>
+                                <th class="p-3">الصف</th>
+                                <th class="p-3">الحالة</th>
+                                <th class="p-3 rounded-l-lg">الرصيد</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashLogsTable" class="text-sm">
+                            </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="attendance" class="view-section hidden fade-in">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
+                    <div class="lg:col-span-1 space-y-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm">
+                            <h3 class="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                                <i class="fas fa-sliders text-blue-500"></i> إعدادات الجلسة
+                            </h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">سعر الحصة (جنية)</label>
+                                    <input type="number" id="sessionPrice" value="50" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 font-bold text-lg text-center text-blue-600 focus:outline-none focus:border-blue-500">
+                                </div>
+                                <hr class="border-slate-100">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">إدخال يدوي (عند تعطل السكانر)</label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="manualCode" placeholder="كود الطالب" class="w-full bg-slate-50 border border-slate-200 rounded-lg p-2 text-center focus:outline-none focus:border-blue-500">
+                                        <button onclick="manualAttendance()" class="bg-slate-800 text-white px-4 rounded-lg hover:bg-slate-700"><i class="fas fa-arrow-left"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="lastStudentCard" class="bg-white p-6 rounded-2xl shadow-sm border-t-8 border-slate-200 transition-colors">
+                            <div class="text-center opacity-50" id="lastStudentPlaceholder">
+                                <i class="fas fa-id-card text-6xl text-slate-200 mb-2"></i>
+                                <p class="text-sm">بانتظار الطالب...</p>
+                            </div>
+                            <div id="lastStudentInfo" class="hidden text-center">
+                                <div class="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600 text-2xl font-bold border-4 border-white shadow-lg">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <h3 class="text-xl font-bold text-slate-800" id="lsName">---</h3>
+                                <p class="text-sm text-slate-500 mb-4" id="lsGrade">---</p>
+                                <div class="inline-block px-4 py-2 rounded-lg bg-slate-100 font-bold text-xl" id="lsBalance">0 ج.م</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 flex flex-col">
+                        <div class="bg-white p-8 rounded-2xl shadow-md flex-1 flex flex-col items-center justify-center scanner-box relative overflow-hidden mb-6" id="scannerZone">
+                            <div class="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]"></div>
+                            
+                            <div class="relative z-10 text-center">
+                                <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg relative">
+                                    <div id="pulseRing" class="absolute inset-0 rounded-full border-4 border-blue-500 opacity-20 scale-150"></div>
+                                    <i class="fas fa-qrcode text-5xl text-slate-700"></i>
+                                </div>
+                                <h2 class="text-3xl font-bold text-slate-800 mb-2">منطقة المسح الضوئي</h2>
+                                <p class="text-slate-500 mb-8 max-w-md mx-auto">تأكد من أن مؤشر الكتابة نشط داخل الصندوق، ثم مرر كارت الطالب أمام الجهاز.</p>
+                                
+                                <input type="text" id="scannerInput" class="w-3/4 bg-slate-50 border-2 border-slate-300 rounded-xl p-4 text-center text-2xl font-mono tracking-widest focus:outline-none focus:border-blue-500 transition-all shadow-inner" placeholder="انقر هنا للتفعيل" autocomplete="off">
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-800 text-white p-4 rounded-xl flex justify-between items-center shadow-lg">
+                            <span class="font-bold"><i class="fas fa-history ml-2 text-blue-400"></i> آخر 3 عمليات:</span>
+                            <div class="flex gap-2 text-xs" id="miniLog">
+                                <span class="opacity-50">لا توجد عمليات بعد</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="students" class="view-section hidden fade-in">
+                <div class="bg-white rounded-2xl shadow-sm flex flex-col h-full">
+                    <div class="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                        <div class="relative w-full md:w-96">
+                            <i class="fas fa-search absolute right-3 top-3 text-slate-400"></i>
+                            <input type="text" id="searchInput" onkeyup="renderStudents()" placeholder="بحث بالاسم، الكود، أو الصف..." class="w-full bg-slate-50 border border-slate-200 rounded-lg py-2.5 pr-10 pl-4 focus:outline-none focus:border-blue-500 focus:bg-white transition-all">
+                        </div>
+                        <button onclick="openModal()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg shadow-lg shadow-blue-500/30 transition-all flex items-center gap-2 font-bold">
+                            <i class="fas fa-user-plus"></i> طالب جديد
+                        </button>
+                    </div>
+
+                    <div class="flex-1 overflow-auto">
+                        <table class="w-full text-right">
+                            <thead class="bg-slate-50 text-slate-600 text-xs font-bold uppercase sticky top-0">
+                                <tr>
+                                    <th class="p-4">الكود</th>
+                                    <th class="p-4">الاسم</th>
+                                    <th class="p-4">الصف / المجموعة</th>
+                                    <th class="p-4">الهاتف</th>
+                                    <th class="p-4">الحساب المالي</th>
+                                    <th class="p-4 text-center">إجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentsTable" class="divide-y divide-slate-100 text-sm">
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="finance" class="view-section hidden fade-in">
+                <div class="bg-white rounded-2xl shadow-sm p-8 text-center">
+                    <i class="fas fa-tools text-6xl text-slate-200 mb-4"></i>
+                    <h2 class="text-2xl font-bold text-slate-700">قسم التقارير والمالية</h2>
+                    <p class="text-slate-500">تم إعداد الأساس البرمجي لهذا القسم. يمكن توسيعه لإضافة رسوم بيانية وتصدير Excel.</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <div id="studentModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl transform scale-95 transition-all p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-slate-800" id="modalTitle">إضافة طالب جديد</h3>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center transition-colors"><i class="fas fa-times"></i></button>
+            </div>
+            
+            <form id="studentForm" onsubmit="saveStudent(event)" class="space-y-4">
+                <input type="hidden" id="editModeId">
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">كود الكارت (Barcode)</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="mCode" class="flex-1 bg-slate-50 border border-slate-200 rounded-lg p-2.5 font-mono focus:border-blue-500 focus:bg-white outline-none" required placeholder="امسح الكارت الآن...">
+                        <button type="button" onclick="generateCode()" class="px-3 bg-slate-200 rounded-lg hover:bg-slate-300 text-slate-600"><i class="fas fa-random"></i></button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 mb-1">اسم الطالب</label>
+                    <input type="text" id="mName" class="w-full border border-slate-200 rounded-lg p-2.5 focus:border-blue-500 outline-none" required placeholder="الاسم رباعي">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">الصف الدراسي</label>
+                        <select id="mGrade" class="w-full border border-slate-200 rounded-lg p-2.5 bg-white focus:border-blue-500 outline-none">
+                            <option>1 ثانوي</option>
+                            <option>2 ثانوي</option>
+                            <option>3 ثانوي</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">مجموعة اليوم</label>
+                        <select id="mDay" class="w-full border border-slate-200 rounded-lg p-2.5 bg-white focus:border-blue-500 outline-none">
+                            <option>السبت</option>
+                            <option>الأحد</option>
+                            <option>الاثنين</option>
+                            <option>الثلاثاء</option>
+                            <option>الأربعاء</option>
+                            <option>الخميس</option>
+                            <option>الجمعة</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">رقم الطالب</label>
+                        <input type="tel" id="mPhone" class="w-full border border-slate-200 rounded-lg p-2.5 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 mb-1">رقم ولي الأمر</label>
+                        <input type="tel" id="mParent" class="w-full border border-slate-200 rounded-lg p-2.5 outline-none">
+                    </div>
+                </div>
+
+                <div class="pt-4 flex gap-3">
+                    <button type="button" onclick="closeModal()" class="flex-1 py-2.5 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-50 font-bold">إلغاء</button>
+                    <button type="submit" class="flex-1 py-2.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-500/30 font-bold">حفظ البيانات</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <script>
+        // --- 1. System Core & Data ---
+        let students = JSON.parse(localStorage.getItem('sys_students')) || [];
+        let logs = JSON.parse(localStorage.getItem('sys_logs')) || [];
+
+        // Save data helper
+        const save = () => {
+            localStorage.setItem('sys_students', JSON.stringify(students));
+            localStorage.setItem('sys_logs', JSON.stringify(logs));
+            refreshUI();
+        };
+
+        // --- 2. UI Navigation & Effects ---
+        function navTo(pageId) {
+            // Update UI Sidebar
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-slate-800', 'border-r-4', 'border-blue-500');
+            });
+            event.currentTarget.classList.add('bg-slate-800', 'border-r-4', 'border-blue-500');
+
+            // Show Section
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(pageId).classList.remove('hidden');
+
+            // Header Update
+            const titles = {
+                'dashboard': ['لوحة القيادة', 'نظرة عامة على سير العمل'],
+                'attendance': ['تسجيل الحضور', 'نظام المسح الضوئي الذكي'],
+                'students': ['قاعدة بيانات الطلاب', 'إدارة وتعديل بيانات الطلاب'],
+                'finance': ['التقارير', 'الإحصائيات المالية']
+            };
+            document.getElementById('pageTitle').innerText = titles[pageId][0];
+            document.getElementById('pageSub').innerText = titles[pageId][1];
+
+            // Auto focus scanner if attendance
+            if(pageId === 'attendance') {
+                setTimeout(() => document.getElementById('scannerInput').focus(), 200);
+            }
+        }
+
+        // --- 3. Scanner Logic (The "Smart" Part) ---
+        const scannerInput = document.getElementById('scannerInput');
+        const scannerZone = document.getElementById('scannerZone');
+        const scannerStatus = document.getElementById('scannerStatus');
+
+        // Focus Tracking
+        scannerInput.addEventListener('focus', () => {
+            scannerZone.classList.add('scanner-focused');
+            scannerZone.classList.remove('scanner-blur');
+            scannerStatus.className = "flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-100 text-emerald-700 text-sm font-bold transition-all shadow-sm";
+            scannerStatus.innerHTML = '<div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div> السكانر متصل وجاهز';
+            document.getElementById('pulseRing').classList.add('animate-ping');
+        });
+
+        scannerInput.addEventListener('blur', () => {
+            scannerZone.classList.remove('scanner-focused');
+            scannerZone.classList.add('scanner-blur');
+            scannerStatus.className = "flex items-center gap-2 px-4 py-2 rounded-full bg-slate-100 text-slate-500 text-sm font-medium transition-all";
+            scannerStatus.innerHTML = '<div class="w-2 h-2 rounded-full bg-slate-400"></div> وضع السكانر خامل';
+            document.getElementById('pulseRing').classList.remove('animate-ping');
+        });
+
+        // Processing Input
+        scannerInput.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') {
+                const code = scannerInput.value.trim();
+                if(code) processAttendance(code);
+                scannerInput.value = ''; // Clear immediately
+            }
+        });
+
+        // Manual Entry
+        function manualAttendance() {
+            const code = document.getElementById('manualCode').value.trim();
+            if(code) {
+                processAttendance(code);
+                document.getElementById('manualCode').value = '';
+            }
+        }
+
+        // --- 4. Business Logic ---
+        function processAttendance(code) {
+            const student = students.find(s => s.id === code);
+            const price = parseInt(document.getElementById('sessionPrice').value) || 50;
+
+            if(student) {
+                // Logic
+                student.balance -= price;
+                const log = {
+                    id: Date.now(),
+                    name: student.name,
+                    grade: student.grade,
+                    time: new Date().toLocaleTimeString('ar-EG'),
+                    balance: student.balance
+                };
+                logs.unshift(log);
+                if(logs.length > 50) logs.pop(); // Keep array clean
+                
+                save();
+                showToast('success', `تم تسجيل: ${student.name}`, `المتبقي: ${student.balance} ج.م`);
+                
+                // Update Card UI
+                updateLastStudentCard(student, true);
+            } else {
+                // New Student Flow
+                if(confirm(`كود غير مسجل (${code}). هل تريد تسجيل طالب جديد؟`)) {
+                    openModal(null, code);
+                } else {
+                    showToast('error', 'خطأ', 'الكود غير مسجل');
+                }
+            }
+        }
+
+        function updateLastStudentCard(student, success) {
+            const placeholder = document.getElementById('lastStudentPlaceholder');
+            const info = document.getElementById('lastStudentInfo');
+            const card = document.getElementById('lastStudentCard');
+            
+            placeholder.classList.add('hidden');
+            info.classList.remove('hidden');
+            
+            document.getElementById('lsName').innerText = student.name;
+            document.getElementById('lsGrade').innerText = `${student.grade} | ${student.day}`;
+            
+            const balEl = document.getElementById('lsBalance');
+            balEl.innerText = `${student.balance} ج.م`;
+            
+            if(student.balance < 0) {
+                balEl.className = "inline-block px-4 py-2 rounded-lg bg-red-100 text-red-600 font-bold text-xl";
+                card.className = "bg-white p-6 rounded-2xl shadow-sm border-t-8 border-red-500 transition-colors";
+            } else {
+                balEl.className = "inline-block px-4 py-2 rounded-lg bg-emerald-100 text-emerald-600 font-bold text-xl";
+                card.className = "bg-white p-6 rounded-2xl shadow-sm border-t-8 border-emerald-500 transition-colors";
+            }
+        }
+
+        // --- 5. Students Management (CRUD) ---
+        function openModal(student = null, code = '') {
+            const modal = document.getElementById('studentModal');
+            const form = document.getElementById('studentForm');
+            modal.classList.remove('hidden');
+            
+            if(student) {
+                document.getElementById('modalTitle').innerText = "تعديل بيانات الطالب";
+                document.getElementById('editModeId').value = student.id;
+                document.getElementById('mCode').value = student.id;
+                document.getElementById('mCode').readOnly = true;
+                document.getElementById('mName').value = student.name;
+                document.getElementById('mGrade').value = student.grade;
+                document.getElementById('mDay').value = student.day;
+                document.getElementById('mPhone').value = student.phone;
+                document.getElementById('mParent').value = student.parent;
+            } else {
+                form.reset();
+                document.getElementById('modalTitle').innerText = "إضافة طالب جديد";
+                document.getElementById('editModeId').value = "";
+                document.getElementById('mCode').value = code;
+                document.getElementById('mCode').readOnly = false;
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('studentModal').classList.add('hidden');
+        }
+
+        function generateCode() {
+            document.getElementById('mCode').value = Math.floor(100000 + Math.random() * 900000);
+        }
+
+        function saveStudent(e) {
+            e.preventDefault();
+            const id = document.getElementById('mCode').value.trim();
+            const isEdit = document.getElementById('editModeId').value;
+            
+            const data = {
+                id: id,
+                name: document.getElementById('mName').value,
+                grade: document.getElementById('mGrade').value,
+                day: document.getElementById('mDay').value,
+                phone: document.getElementById('mPhone').value,
+                parent: document.getElementById('mParent').value,
+                balance: isEdit ? students.find(s => s.id === id).balance : 0
+            };
+
+            if(isEdit) {
+                const idx = students.findIndex(s => s.id === id);
+                students[idx] = data;
+                showToast('success', 'تم التعديل', 'تم تحديث البيانات بنجاح');
+            } else {
+                if(students.some(s => s.id === id)) return alert('الكود مستخدم!');
+                students.push(data);
+                showToast('success', 'تم الحفظ', 'تم إضافة الطالب بنجاح');
+            }
+            
+            save();
+            closeModal();
+        }
+
+        function deleteStudent(id) {
+            if(confirm('حذف نهائي؟')) {
+                students = students.filter(s => s.id !== id);
+                save();
+                showToast('success', 'تم الحذف', 'تم حذف الطالب من النظام');
+            }
+        }
+
+        // --- 6. Rendering & Helpers ---
+        function renderStudents() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const tbody = document.getElementById('studentsTable');
+            
+            tbody.innerHTML = students
+                .filter(s => s.name.toLowerCase().includes(q) || s.id.includes(q) || s.grade.includes(q))
+                .map(s => `
+                    <tr class="hover:bg-slate-50 transition-colors group">
+                        <td class="p-4 font-mono text-slate-500">${s.id}</td>
+                        <td class="p-4 font-bold text-slate-800">${s.name}</td>
+                        <td class="p-4 text-slate-500">
+                            <span class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs font-bold">${s.grade}</span>
+                            <span class="text-xs mx-1">|</span> ${s.day}
+                        </td>
+                        <td class="p-4 text-xs text-slate-400">${s.phone}</td>
+                        <td class="p-4 font-bold ${s.balance < 0 ? 'text-red-500' : 'text-emerald-500'} dir-ltr">${s.balance} EGP</td>
+                        <td class="p-4 text-center">
+                            <button onclick="openModal(students.find(s => s.id == '${s.id}'))" class="text-blue-500 hover:bg-blue-100 p-2 rounded transition"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteStudent('${s.id}')" class="text-red-500 hover:bg-red-100 p-2 rounded transition"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('');
+        }
+
+        function refreshUI() {
+            // Dashboard Stats
+            document.getElementById('dashTotalStudents').innerText = students.length;
+            
+            // Calc today stats (simple simulation)
+            // In real app, filter logs by date. Here we assume logs are recent.
+            document.getElementById('dashTodayAttendance').innerText = logs.length;
+            const price = parseInt(document.getElementById('sessionPrice').value) || 50;
+            document.getElementById('dashTodayIncome').innerText = logs.length * price;
+            
+            const totalDebt = students.reduce((acc, curr) => acc + (curr.balance < 0 ? curr.balance : 0), 0);
+            document.getElementById('dashTotalDebt').innerText = Math.abs(totalDebt);
+
+            // Dashboard Table
+            document.getElementById('dashLogsTable').innerHTML = logs.slice(0, 5).map(l => `
+                <tr class="border-b border-slate-50">
+                    <td class="p-3 text-slate-400 text-xs">${l.time}</td>
+                    <td class="p-3 font-bold text-slate-700">${l.name}</td>
+                    <td class="p-3 text-xs text-slate-500">${l.grade}</td>
+                    <td class="p-3"><span class="text-xs px-2 py-0.5 rounded ${l.balance < 0 ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}">تم التسجيل</span></td>
+                    <td class="p-3 font-mono text-xs font-bold dir-ltr text-right">${l.balance}</td>
+                </tr>
+            `).join('');
+
+            // Mini Log (Attendance Page)
+            document.getElementById('miniLog').innerHTML = logs.slice(0, 3).map(l => `
+                <div class="bg-slate-700 px-3 py-1 rounded-lg flex items-center gap-2">
+                    <span class="font-bold text-white">${l.name}</span>
+                    <span class="${l.balance < 0 ? 'text-red-400' : 'text-green-400'} text-xs font-mono">${l.balance}</span>
+                </div>
+            `).join('');
+
+            renderStudents();
+        }
+
+        // Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('clockTime').innerText = now.toLocaleTimeString('en-US', { hour12: false });
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('clockDate').innerText = now.toLocaleDateString('ar-EG', options);
+        }, 1000);
+
+        // Toast Notification System
+        function showToast(type, title, msg) {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = type === 'success' ? 'bg-slate-800 border-r-4 border-emerald-500' : 'bg-slate-800 border-r-4 border-red-500';
+            const icon = type === 'success' ? 'check-circle text-emerald-500' : 'exclamation-circle text-red-500';
+            
+            toast.className = `toast ${colors}`;
+            toast.innerHTML = `
+                <i class="fas fa-${icon} text-xl"></i>
+                <div>
+                    <h4 class="font-bold text-sm">${title}</h4>
+                    <p class="text-xs text-slate-300">${msg}</p>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideIn 0.3s reverse forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Init
+        refreshUI();
+        navTo('dashboard'); // Start at dashboard
+
+    </script>
+</body>
+</html>
